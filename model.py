@@ -7,6 +7,8 @@ https://github.com/openai/gpt-2/blob/master/src/model.py
 https://github.com/huggingface/transformers/blob/main/src/transformers/models/gpt2/modeling_gpt2.py
 """
 
+import os
+import json
 import math
 import inspect
 from dataclasses import dataclass
@@ -144,6 +146,8 @@ class GPT(nn.Module):
             if pn.endswith('c_proj.weight'):
                 torch.nn.init.normal_(p, mean=0.0, std=0.02/math.sqrt(2 * config.n_layer))
 
+
+
         # report number of parameters
         print("number of parameters: %.2fM" % (self.get_num_params()/1e6,))
 
@@ -203,9 +207,27 @@ class GPT(nn.Module):
             if hasattr(block.attn, 'bias'):
                 block.attn.bias = block.attn.bias[:,:,:block_size,:block_size]
 
+
+    def save_pretrained(self, save_directory):
+        """
+        Save the model configuration and state dictionary to the provided directory.
+        """
+        os.makedirs(save_directory, exist_ok=True)
+
+        # Save model configuration
+        config_path = os.path.join(save_directory, "config.json")
+        with open(config_path, "w") as config_file:
+            json.dump(self.config.__dict__, config_file)
+
+        # Save model state dictionary
+        state_dict_path = os.path.join(save_directory, "pytorch_model.bin")
+        torch.save(self.state_dict(), state_dict_path)
+
+        print(f"Model and configuration saved at {save_directory}")
+
     @classmethod
     def from_pretrained(cls, model_type, override_args=None):
-        assert model_type in {'gpt2', 'gpt2-medium', 'gpt2-large', 'gpt2-xl'}
+        #assert model_type in {'gpt2', 'gpt2-medium', 'gpt2-large', 'gpt2-xl'}
         override_args = override_args or {} # default to empty dict
         # only dropout can be overridden see more notes below
         assert all(k == 'dropout' for k in override_args)
@@ -235,9 +257,8 @@ class GPT(nn.Module):
         sd_keys = [k for k in sd_keys if not k.endswith('.attn.bias')] # discard this mask / buffer, not a param
 
         # init a huggingface/transformers model
-        model_hf = GPT2LMHeadModel.from_pretrained(model_type)
+        model_hf = GPT2LMHeadModel.from_pretrained(model_type, local_files_only=True)
         sd_hf = model_hf.state_dict()
-
         # copy while ensuring all of the parameters are aligned and match in names and shapes
         sd_keys_hf = sd_hf.keys()
         sd_keys_hf = [k for k in sd_keys_hf if not k.endswith('.attn.masked_bias')] # ignore these, just a buffer
@@ -257,7 +278,6 @@ class GPT(nn.Module):
                 assert sd_hf[k].shape == sd[k].shape
                 with torch.no_grad():
                     sd[k].copy_(sd_hf[k])
-
         return model
 
     def configure_optimizers(self, weight_decay, learning_rate, betas, device_type):
