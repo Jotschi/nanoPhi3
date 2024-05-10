@@ -1,6 +1,6 @@
 # nanoPhi3
 
-![nanoPhi3](assets/nanoPhi3.png)
+![nanoPhi3](assets/nanoPhi3.jpg)
 
 
 NanoPhi3 is a customized fork of the [nanoGPT](https://github.com/karpathy/nanoGPT) project by Andrej Karpathy.
