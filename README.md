@@ -7,7 +7,14 @@ NanoPhi3 is a customized fork of the [nanoGPT](https://github.com/karpathy/nanoG
 
 The goal of this project is to provide a small environment to pre-train a language model based on the [Phi3](https://huggingface.co/docs/transformers/main/model_doc/phi3) model architecture.
 
+In contrast to the `nanoGPT` project does this project make use of transformers for training and model setup.
+
 > NOTE: This project is a WIP and still under development. And training loss is currently not reported. I'm sharing this state on GitHub to get feedback and to improve the implementation.
+
+## Issues
+
+* Training loss is currently not being reported due to a bug
+* flash-attn seems not to be used correctly
 
 ## OS / Python deps
 
@@ -30,6 +37,8 @@ pip install wandb
 
 ## Prepare Dataset
 
+The prepare script will tokenize the dataset and store the data as `.bin` files.
+
 ```bash
 python data/kleiner_astronaut/prepare_phi3.py
 ```
@@ -46,7 +55,7 @@ Dependencies:
 
 - [pytorch](https://pytorch.org) 
 - [numpy](https://numpy.org/install/) 
--  `transformers` for huggingface transformers (to load Phi3 checkpoints)
+-  `transformers` for huggingface transformers (to load Phi3 checkpoints, setup model arch)
 -  `flash-attn` for the Phi3 attention head implementation
 -  `datasets` for huggingface datasets (if you want to download + preprocess OpenWebText)
 -  `wandb` for optional logging
