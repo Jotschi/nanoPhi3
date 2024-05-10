@@ -2,7 +2,7 @@ import argparse
 import os
 import torch
 from safetensors.torch import save_model
-from model import GPTConfig, GPT
+from ..phi3.modeling_phi3 import Phi3Config, Phi3Model
 
 
 def convert_single(out_dir: str):
@@ -11,9 +11,9 @@ def convert_single(out_dir: str):
 
     # Load PT
     #checkpoint = torch.load(ckpt_path, map_location="cpu")
-    #gptconf = GPTConfig(**checkpoint['model_args'])
-    #model = GPT(gptconf)
-    hf_model = GPT.from_pretrained("gpt2", dict(dropout=0.0))
+    #phi3conf = Phi3Config(**checkpoint['model_args'])
+    #model = Phi3Model(phi3conf)
+    hf_model = Phi3Model.from_pretrained("microsoft/Phi-3-mini-4k-instruct", dict(dropout=0.0))
     print(hf_model)
     # Write ST
     #sf_filename = os.path.join(out_dir, sf_name)

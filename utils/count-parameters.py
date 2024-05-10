@@ -5,7 +5,8 @@ import os
 import pickle
 from contextlib import nullcontext
 import torch
-from model import GPTConfig, GPT
+from ..phi3.modeling_phi3 import Phi3Config, Phi3Model
+
 
 # -----------------------------------------------------------------------------
 out_dir = 'out' # ignored if init_from is not 'resume'
@@ -17,8 +18,8 @@ exec(open('configurator.py').read()) # overrides from command line or config fil
 
 ckpt_path = os.path.join(out_dir, 'ckpt.pt')
 checkpoint = torch.load(ckpt_path, map_location=device)
-gptconf = GPTConfig(**checkpoint['model_args'])
-model = GPT(gptconf)
+phi3conf = Phi3Config(**checkpoint['model_args'])
+model = Phi3Model(phi3conf)
 pytorch_total_params =  sum(p.numel() for p in model.parameters() if p.requires_grad)
 
 print("Total parameter: " + str(pytorch_total_params))

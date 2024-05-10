@@ -4,7 +4,7 @@
 import os
 from tqdm import tqdm
 import numpy as np
-import tiktoken
+from transformers import AutoTokenizer
 from datasets import load_dataset # huggingface datasets
 
 # number of workers in .map() call
@@ -16,7 +16,7 @@ num_proc = 8
 # it is better than 1 usually though
 num_proc_load_dataset = num_proc
 
-enc = tiktoken.get_encoding("gpt2")
+tokenizer = AutoTokenizer.from_pretrained("microsoft/Phi-3-mini-4k-instruct")
 
 if __name__ == '__main__':
     # takes 54GB in huggingface .cache dir, about 8M documents (8,013,769)
@@ -39,10 +39,10 @@ if __name__ == '__main__':
     #     })
     # })
 
-    # we now want to tokenize the dataset. first define the encoding function (gpt2 bpe)
+    # we now want to tokenize the dataset. first define the encoding function
     def process(example):
-        ids = enc.encode_ordinary(example['text']) # encode_ordinary ignores any special tokens
-        ids.append(enc.eot_token) # add the end of text token, e.g. 50256 for gpt2 bpe
+        ids = tokenizer.encode(example['text']) # encode_ordinary ignores any special tokens
+        ids.append(tokenizer.eos_token_id) # add the end of text token, e.g. 32000 for phi3-mini-4k bpe
         # note: I think eot should be prepended not appended... hmm. it's called "eot" though...
         out = {'ids': ids, 'len': len(ids)}
         return out

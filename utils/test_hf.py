@@ -3,28 +3,27 @@ import os
 import sys
 import torch
 from safetensors.torch import save_model
-from model import GPTConfig, GPT
-from transformers import GPT2LMHeadModel, AutoTokenizer, GenerationConfig, GPT2Config
-from transformers  import GPT2TokenizerFast
+from ..phi3.modeling_phi3 import Phi3Config, Phi3Model
+from transformers  import AutoTokenizer
 
 def test(model_path: str):
     #sf_name = "model.safetensors"
     # Load PT
     #checkpoint = torch.load(ckpt_path, map_location="cpu")
-    #gptconf = GPTConfig(**checkpoint['model_args'])
-    #GPT.from_pretrained("hf_out")
-    #model = GPT(gptconf)
-    #conf =  GPT2Config(n_embd=780, vocab_size=50304, resid_pdrop=0.2, embd_pdrop=0.2, attn_pdrop=0.2)
-    #model = GPT2LMHeadModel.from_pretrained(model_path, config=conf, local_files_only=True, ignore_mismatched_sizes=True)
+    #phi3conf = Phi3Config(**checkpoint['model_args'])
+    #Phi3Model.from_pretrained("hf_out")
+    #model = Phi3Model(phi3conf)
+    #conf =  Phi3Config(n_embd=780, vocab_size=50304, resid_pdrop=0.2, embd_pdrop=0.2, attn_pdrop=0.2)
+    #model = Phi3Model.from_pretrained(model_path, config=conf, local_files_only=True, ignore_mismatched_sizes=True)
     
     ckpt_path = os.path.join(model_path, 'ckpt.pt')
     checkpoint = torch.load(ckpt_path, map_location="cuda")
-    gptconf = GPTConfig(**checkpoint['model_args'])
-    model = GPT(gptconf)
+    phi3conf = Phi3Config(**checkpoint['model_args'])
+    model = Phi3Model(phi3conf)
     
     print(model)
     
-    tokenizer = GPT2TokenizerFast.from_pretrained("gpt2")
+    tokenizer = AutoTokenizer.from_pretrained("microsoft/Phi-3-mini-4k-instruct")
 
     prompt = "Es war einmal"
 

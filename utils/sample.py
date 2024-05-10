@@ -5,11 +5,11 @@ import os
 import pickle
 from contextlib import nullcontext
 import torch
-import tiktoken
-from model import GPTConfig, GPT
+from ..phi3.modeling_phi3 import Phi3Config, Phi3Model
+from transformers import AutoTokenizer
 
 # -----------------------------------------------------------------------------
-init_from = 'resume' # either 'resume' (from an out_dir) or a gpt2 variant (e.g. 'gpt2-xl')
+init_from = 'resume' # either 'resume' (from an out_dir) or a phi3 variant (e.g. 'microsoft/Phi-3-mini-4k-instruct')
 out_dir = 'out' # ignored if init_from is not 'resume'
 start = "\n" # or "<|endoftext|>" or etc. Can also specify a file, use as: "FILE:prompt.txt"
 num_samples = 10 # number of samples to draw
@@ -36,17 +36,17 @@ if init_from == 'resume':
     # init from a model saved in a specific directory
     ckpt_path = os.path.join(out_dir, 'ckpt.pt')
     checkpoint = torch.load(ckpt_path, map_location=device)
-    gptconf = GPTConfig(**checkpoint['model_args'])
-    model = GPT(gptconf)
+    phi3conf = Phi3Config(**checkpoint['model_args'])
+    model = Phi3Model(phi3conf)
     state_dict = checkpoint['model']
     unwanted_prefix = '_orig_mod.'
     for k,v in list(state_dict.items()):
         if k.startswith(unwanted_prefix):
             state_dict[k[len(unwanted_prefix):]] = state_dict.pop(k)
     model.load_state_dict(state_dict)
-elif init_from.startswith('gpt2'):
-    # init from a given GPT-2 model
-    model = GPT.from_pretrained(init_from, dict(dropout=0.0))
+elif init_from.startswith('phi3'):
+    # init from a given Phi3 model
+    model = Phi3Model.from_pretrained(init_from, dict(dropout=0.0))
 
 model.eval()
 model.to(device)
@@ -67,11 +67,11 @@ if load_meta:
     encode = lambda s: [stoi[c] for c in s]
     decode = lambda l: ''.join([itos[i] for i in l])
 else:
-    # ok let's assume gpt-2 encodings by default
-    print("No meta.pkl found, assuming GPT-2 encodings...")
-    enc = tiktoken.get_encoding("gpt2")
-    encode = lambda s: enc.encode(s, allowed_special={"<|endoftext|>"})
-    decode = lambda l: enc.decode(l)
+    # ok let's assume phi3 encodings by default
+    print("No meta.pkl found, assuming Phi3 encodings...")
+    tokenizer = AutoTokenizer.from_pretrained("microsoft/Phi-3-mini-4k-instruct")
+    encode = lambda s: tokenizer.encode(s, allowed_special={"<|endoftext|>"})
+    decode = lambda l: tokenizer.decode(l)
 
 # encode the beginning of the prompt
 if start.startswith('FILE:'):

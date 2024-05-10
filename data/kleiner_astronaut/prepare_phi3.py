@@ -21,10 +21,10 @@ tokenizer = AutoTokenizer.from_pretrained("microsoft/Phi-3-mini-4k-instruct")
 if __name__ == '__main__':
     dataset = load_dataset("jotschi/kleiner-astronaut", num_proc=num_proc_load_dataset)
 
-    # we now want to tokenize the dataset. first define the encoding function (gpt2 bpe)
+    # we now want to tokenize the dataset. first define the encoding function
     def process(example):
         ids = tokenizer.encode(example['text']) # encode_ordinary ignores any special tokens
-        ids.append(tokenizer.eos_token_id) # add the end of text token, e.g. 50256 for gpt2 bpe
+        ids.append(tokenizer.eos_token_id) # add the end of text token, e.g. 32000 for phi3 mini 4k
         # note: I think eot should be prepended not appended... hmm. it's called "eot" though...
         out = {'ids': ids, 'len': len(ids)}
         return out

@@ -6,7 +6,7 @@ from contextlib import nullcontext
 import numpy as np
 import time
 import torch
-from model import GPTConfig, GPT
+from modeling_phi3 import Phi3Config, Phi3Model
 
 # -----------------------------------------------------------------------------
 batch_size = 12
@@ -31,7 +31,7 @@ ctx = nullcontext() if device_type == 'cpu' else torch.amp.autocast(device_type=
 
 # data loading init
 if real_data:
-    dataset = 'openwebtext'
+    dataset = 'kleiner_astronaut'
     data_dir = os.path.join('data', dataset)
     train_data = np.memmap(os.path.join(data_dir, 'train.bin'), dtype=np.uint16, mode='r')
     def get_batch(split):
@@ -48,13 +48,13 @@ else:
     get_batch = lambda split: (x, y)
 
 # model init
-gptconf = GPTConfig(
+phi3config = Phi3Config(
     block_size = block_size, # how far back does the model look? i.e. context size
     n_layer = 12, n_head = 12, n_embd = 768, # size of the model
     dropout = 0, # for determinism
     bias = bias,
 )
-model = GPT(gptconf)
+model = Phi3Model(phi3config)
 model.to(device)
 
 optimizer = model.configure_optimizers(weight_decay=1e-2, learning_rate=1e-4, betas=(0.9, 0.95), device_type=device_type)
