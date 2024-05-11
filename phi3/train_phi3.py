@@ -27,7 +27,7 @@ import torch
 from torch.nn.parallel import DistributedDataParallel as DDP
 from torch.distributed import init_process_group, destroy_process_group
 
-from modeling_phi3 import Phi3Config, Phi3Model
+from modeling_phi3 import Phi3Config, Phi3ForCausalLM
 
 # -----------------------------------------------------------------------------
 # default config values designed to train a Phi3 Mini on OpenWebText
@@ -71,7 +71,9 @@ backend = 'nccl' # 'nccl', 'gloo', etc.
 # system
 device = 'cuda' # examples: 'cpu', 'cuda', 'cuda:0', 'cuda:1' etc., or try 'mps' on macbooks
 dtype = 'bfloat16' if torch.cuda.is_available() and torch.cuda.is_bf16_supported() else 'float16' # 'float32', 'bfloat16', or 'float16', the latter will auto implement a GradScaler
-compile = True # use PyTorch 2.0 to compile the model to be faster
+
+# DEBUG - TODO RE-ENABLE
+compile = False # use PyTorch 2.0 to compile the model to be faster
 # -----------------------------------------------------------------------------
 config_keys = [k for k,v in globals().items() if not k.startswith('_') and isinstance(v, (int, float, bool, str))]
 exec(open('configurator.py').read()) # overrides from command line or config file
@@ -119,7 +121,7 @@ def get_batch(split):
     if split == 'train':
         data = np.memmap(os.path.join(data_dir, 'train_phi3.bin'), dtype=np.uint16, mode='r')
     else:
-        data = np.memmap(os.path.join(data_dir, 'val_phi3.bin'), dtype=np.uint16, mode='r')
+        data = np.memmap(os.path.join(data_dir, 'test_phi3.bin'), dtype=np.uint16, mode='r')
     ix = torch.randint(len(data) - block_size, (batch_size,))
     x = torch.stack([torch.from_numpy((data[i:i+block_size]).astype(np.int64)) for i in ix])
     y = torch.stack([torch.from_numpy((data[i+1:i+1+block_size]).astype(np.int64)) for i in ix])
@@ -154,7 +156,8 @@ if init_from == 'scratch':
         print("defaulting to vocab_size of Phi3 mini to 32064")
     model_args['vocab_size'] = meta_vocab_size if meta_vocab_size is not None else 32064
     phi3conf = Phi3Config(**model_args)
-    model = Phi3Model(phi3conf)
+    phi3conf.return_dict = False
+    model = Phi3ForCausalLM(phi3conf)
 elif init_from == 'resume':
     print(f"Resuming training from {out_dir}")
     # resume training from a checkpoint.
@@ -167,7 +170,8 @@ elif init_from == 'resume':
         model_args[k] = checkpoint_model_args[k]
     # create the model
     phi3conf = Phi3Config(**model_args)
-    model = Phi3Model(phi3conf)
+    phi3conf.return_dict = False
+    model = Phi3ForCausalLM(phi3conf)
     state_dict = checkpoint['model']
     # fix the keys of the state dictionary :(
     # honestly no idea how checkpoints sometimes get this prefix, have to debug more
@@ -182,7 +186,7 @@ elif init_from.startswith('phi3'):
     print(f"Initializing from Phi-3-mini-4k weights: {init_from}")
     # initialize from Phi-3-mini 4k weights
     override_args = dict(dropout=dropout)
-    model = Phi3Model.from_pretrained(init_from, override_args)
+    model = Phi3ForCausalLM.from_pretrained(init_from, override_args)
     # read off the created config params, so we can store them into checkpoint correctly
     for k in ['n_layer', 'n_head', 'n_embd', 'block_size', 'bias', 'vocab_size']:
         model_args[k] = getattr(model.config, k)
@@ -222,8 +226,9 @@ def estimate_loss():
             X, Y = get_batch(split)
             with ctx:
                 logits, loss = model(X, Y)
-            #losses[k] = loss.item()
-        #out[split] = losses.mean()
+             
+            losses[k] = loss.item()
+        out[split] = losses.mean()
     model.train()
     return out
 

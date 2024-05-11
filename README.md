@@ -28,11 +28,8 @@ apt-get install python3.11-dev nvidia-cuda-dev
 ```bash
 python3.11 -m venv venv
 . venv/bin/activate
-pip install torch transformers
-pip install wheel
-pip install datasets
+pip install torch transformers wheel datasets wandb
 pip install -U flash-attn --no-build-isolation
-pip install wandb
 ```
 
 ## Prepare Dataset

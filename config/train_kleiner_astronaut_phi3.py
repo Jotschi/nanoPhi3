@@ -14,12 +14,12 @@ wandb_run_name = 'mini-phi3-b8'
 
 dataset = 'kleiner_astronaut'
 gradient_accumulation_steps = 1
-batch_size = 8
+batch_size = 2
 block_size = 256 # context of up to 256 previous characters
 
 # baby Phi3 model :)
-n_layer = 12
-n_head = 12
+n_layer = 6
+n_head = 6
 n_embd = 780
 dropout = 0.2
 
